@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chess App</title>
+    <script>
+        function fetchTip() {
+            fetch("/tip/")
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("tip").innerText = data.tip;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h2>Welcome to the Chess App</h2>
+    {% if user.is_authenticated %}
+        <p>Hello, {{ user.username }} | <a href="{% url 'logout' %}">Logout</a> | <a href="{% url 'profile' %}">Profile</a></p>
+    {% else %}
+        <p><a href="{% url 'login' %}">Login</a> or <a href="{% url 'register' %}">Register</a></p>
+    {% endif %}
+    <p id="tip">Click for a chess tip.</p>
+    <button onclick="fetchTip()">Get Tip</button>
+</body>
+</html>

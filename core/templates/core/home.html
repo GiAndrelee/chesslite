@@ -1,26 +1,122 @@
-
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chess App</title>
-    <script>
-        function fetchTip() {
-            fetch("/tip/")
+    <title>ChessLite</title>
+
+    <!-- ✅ Working CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        #board {
+            width: 400px;
+            margin-bottom: 20px;
+        }
+        .tip-box {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 8px;
+            width: 400px;
+        }
+        button {
+            padding: 6px 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+{% if user.is_authenticated %}
+    <h2>Welcome, {{ user.username }}!</h2>
+    <p><a href="{% url 'logout' %}">Logout</a> | <a href="{% url 'profile' %}">Profile</a></p>
+
+    <!-- ♟️ Chessboard -->
+    <div id="board"></div>
+    <p id="status"></p>
+
+    <!-- 💬 Chess Tips -->
+    <div class="tip-box">
+        <p><strong>Chess Tip:</strong></p>
+        <p id="tip">Click the button below to get a chess tip.</p>
+        <button onclick="fetchTip()">Get Tip</button>
+    </div>
+
+{% else %}
+    <h2>Welcome to ChessLite</h2>
+    <p>Please <a href="{% url 'login' %}">log in</a> or <a href="{% url 'register' %}">sign up</a> to play.</p>
+{% endif %}
+
+<!-- ✅ Required Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+
+{% if user.is_authenticated %}
+<script>
+    var board = null;
+    var game = new Chess();
+
+    function onDragStart(source, piece, position, orientation) {
+        if (game.game_over() ||
+            (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
+            (game.turn() === 'b' && piece.search(/^w/) !== -1)) {
+            return false;
+        }
+    }
+
+    function onDrop(source, target) {
+        var move = game.move({
+            from: source,
+            to: target,
+            promotion: 'q'
+        });
+
+        if (move === null) return 'snapback';
+        updateStatus();
+    }
+
+    function updateStatus() {
+        var status = '';
+        var moveColor = game.turn() === 'b' ? 'Black' : 'White';
+
+        if (game.in_checkmate()) {
+            status = 'Game over, ' + moveColor + ' is in checkmate.';
+        } else if (game.in_draw()) {
+            status = 'Game over, drawn position.';
+        } else {
+            status = moveColor + ' to move';
+            if (game.in_check()) {
+                status += ', in check';
+            }
+        }
+
+        document.getElementById('status').innerText = status;
+    }
+
+    var config = {
+        draggable: true,
+        position: 'start',
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+    };
+
+    board = Chessboard('board', config);
+    updateStatus();
+
+    function fetchTip() {
+        fetch("/tip/")
             .then(res => res.json())
             .then(data => {
                 document.getElementById("tip").innerText = data.tip;
             });
-        }
-    </script>
-</head>
-<body>
-    <h2>Welcome to the Chess App</h2>
-    {% if user.is_authenticated %}
-        <p>Hello, {{ user.username }} | <a href="{% url 'logout' %}">Logout</a> | <a href="{% url 'profile' %}">Profile</a></p>
-    {% else %}
-        <p><a href="{% url 'login' %}">Login</a> or <a href="{% url 'register' %}">Register</a></p>
-    {% endif %}
-    <p id="tip">Click for a chess tip.</p>
-    <button onclick="fetchTip()">Get Tip</button>
+    }
+</script>
+{% endif %}
+
 </body>
 </html>
+

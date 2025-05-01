@@ -13,6 +13,7 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('profile/', views.profile, name='profile'),
     path('tip/', chess_tip, name='tip'),
+   path('logout/', views.logout_view, name='logout'),
 path('accounts/', include('django.contrib.auth.urls')),
 
 ]
